@@ -1,0 +1,49 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: salesdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./sql/mysql:/docker-entrypoint-initdb.d
+    command: ["--default-authentication-plugin=mysql_native_password"]
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crmdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./sql/postgres:/docker-entrypoint-initdb.d
+
+  warehouse:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: warehouse
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/warehouse:/docker-entrypoint-initdb.d
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./sql/sqlserver:/init
+    command: /bin/bash -c "/opt/mssql/bin/sqlservr & sleep 25 && /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Passw0rd' -C -i /init/00_init.sql && wait"
+
+  metabase:
+    image: metabase/metabase:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - warehouse
